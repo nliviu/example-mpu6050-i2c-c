@@ -202,7 +202,7 @@ bool mpu6050_read_temperature(double *temperature) {
   }
 
   int16_t t = mgos_i2c_read_reg_w(s_dev->i2c, s_dev->addr, REG_TEMP_OUT);
-  *temperature = (t / 340) + 36.53;
+  *temperature = (float) t / 340.0 + 36.53;
 
   return true;
 }
