@@ -40,6 +40,7 @@
 #define REG_PWR_MGMT_2 0x6C
 /* MPU-6000-Register-Map1.pdf page 45 */
 #define REG_WHO_AM_I 0x75
+#define CHIP_ID 0x68
 
 struct mpu6050 {
   struct mgos_i2c *i2c;
@@ -64,9 +65,10 @@ bool mpu6050_init(uint16_t addr) {
     return false;
   }
 
-  int me = mgos_i2c_read_reg_b(i2c, addr, REG_WHO_AM_I);
-  if (addr != me) {
-    LOG(LL_ERROR, ("%s%02X != 0x68!", str_err, me));
+  int me = mgos_i2c_read_reg_b(i2c, addr, REG_WHO_AM_I) & 0xFF;
+  if (CHIP_ID != me) {
+    LOG(LL_ERROR,
+        ("%s WHO_AM_I: 0x%02X != 0x%02X!", str_err, me, (int) CHIP_ID));
     return false;
   }
 
@@ -80,11 +82,11 @@ bool mpu6050_init(uint16_t addr) {
 
   // get gyro full scale
   /*
-   * Bit7  | Bit6  | Bit5  | Bit4 | Bit3 | Bit2 | Bit1 | Bit0 
+   * Bit7  | Bit6  | Bit5  | Bit4 | Bit3 | Bit2 | Bit1 | Bit0
    * XG_ST | YG_ST | ZG_ST | FS_SEL[1:0] | -    | -    | -
    */
   uint8_t gfs_sel;
-  bool ok= mgos_i2c_getbits_reg_b(i2c, addr, REG_GYRO_CONFIG, 3, 2, &gfs_sel);
+  bool ok = mgos_i2c_getbits_reg_b(i2c, addr, REG_GYRO_CONFIG, 3, 2, &gfs_sel);
   if (!ok) {
     LOG(LL_ERROR, ("%s%s", str_err, "failed to read gyro scale!"));
     return false;
@@ -96,7 +98,7 @@ bool mpu6050_init(uint16_t addr) {
    * XA_ST | YA_ST | ZA_ST | AFS_SEL[1:0] |         -
    */
   uint8_t afs_sel;
-  ok= mgos_i2c_getbits_reg_b(i2c, addr, REG_ACCEL_CONFIG, 3, 2, &afs_sel);
+  ok = mgos_i2c_getbits_reg_b(i2c, addr, REG_ACCEL_CONFIG, 3, 2, &afs_sel);
   if (!ok) {
     LOG(LL_ERROR, ("%s%s", str_err, "failed to read accel scale!"));
     return false;
